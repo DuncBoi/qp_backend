@@ -19,4 +19,19 @@ app.get('/', async (req, res) => {
     }
 })
 
+app.get('/api/problems/:id', async (req, res) => {
+    try{
+        const { id } = req.params;
+        const data = await pool.query('SELECT * FROM problems WHERE id = $1', [id]);
+        if (data.rows.length === 0){
+            return res.status(404).json({error: 'Problem not found'});
+        }
+        const problem = data.rows[0];
+        res.status(200).send(problem)
+    } catch (err){
+        console.log(err)
+        res.sendStatus(500)
+    }
+})
+
 app.listen(port, () => console.log(`Server has started on port: ${port}`))
