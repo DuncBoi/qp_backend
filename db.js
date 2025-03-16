@@ -15,10 +15,10 @@ const pool = new Pool({
 
 pool.connect()
     .then(client => {
-        console.log('✅ Successfully connected to PostgreSQL!')
+        console.log('Successfully connected to PostgreSQL!')
         client.release() // Release connection back to pool
     })
-    .catch(err => console.error('❌ Database connection error:', err))
+    .catch(err => console.error('Database connection error:', err))
 
 
 
