@@ -34,4 +34,40 @@ app.get('/problems/:id', async (req, res) => {
     }
 })
 
+const authenticateKey = (req, res, next) => {
+    const submittedKey = req.body.secretKey;
+    if (submittedKey === process.env.ADMIN_SECRET) {
+      delete req.body.secretKey; // Remove key before DB insertion
+      next();
+    } else {
+      res.status(401).json({ error: 'Invalid secret key' });
+    }
+  };
+
+// admin post
+app.post('/admin/post', authenticateKey, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO problems (
+          id, title, difficulty, category, 
+          description, solution, explanation, yt_link
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          req.body.id, // Manual ID from form
+          req.body.title,
+          req.body.difficulty,
+          req.body.category,
+          req.body.description,
+          req.body.solution,
+          req.body.explanation,
+          req.body.yt_link || null
+        ]
+      );
+      res.json({ success: true });
+    } catch (err) {
+      console.error('Database error:', err);
+      res.status(500).json({ error: 'Insert failed' });
+    }
+  });
+
 app.listen(port, () => console.log(`Server has started on port: ${port}`))
