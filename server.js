@@ -34,7 +34,7 @@ app.get('/problems/:id', async (req, res) => {
     }
 })
 
-app.put('/problems/:id', validateKey, async (req, res) => {
+app.put('/problems/:id', authenticateKey, async (req, res) => {
     try {
         const { rows } = await pool.query(
             `UPDATE problems SET
@@ -73,7 +73,7 @@ const authenticateKey = (req, res, next) => {
     }
   };
 
-  app.delete('/problems/:id', validateKey, async (req, res) => {
+  app.delete('/problems/:id', authenticateKey, async (req, res) => {
     try {
         const { rowCount } = await pool.query(
             'DELETE FROM problems WHERE id = $1',
