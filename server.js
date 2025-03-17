@@ -44,6 +44,47 @@ const authenticateKey = (req, res, next) => {
     }
   };
 
+app.put('/problems/:id', authenticateKey, async (req, res) => {
+    try {
+        const { rows } = await pool.query(
+            `UPDATE problems SET
+                title = $1,
+                difficulty = $2,
+                category = $3,
+                description = $4,
+                solution = $5,
+                explanation = $6,
+                yt_link = $7
+            WHERE id = $8 RETURNING id`,
+            [
+                req.body.title,
+                req.body.difficulty,
+                req.body.category,
+                req.body.description,
+                req.body.solution,
+                req.body.explanation,
+                req.body.yt_link || null,
+                req.params.id
+            ]
+        );
+        rows.length ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
+    } catch (err) {
+        res.status(500).json({ error: 'Update failed' });
+    }
+});
+
+  app.delete('/problems/:id', authenticateKey, async (req, res) => {
+    try {
+        const { rowCount } = await pool.query(
+            'DELETE FROM problems WHERE id = $1',
+            [req.params.id]
+        );
+        rowCount ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
+    } catch (err) {
+        res.status(500).json({ error: 'Delete failed' });
+    }
+});
+
 // admin post
 app.post('/admin/post', authenticateKey, async (req, res) => {
     try {
