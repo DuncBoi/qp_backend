@@ -11,7 +11,7 @@ app.use(express.json())
 
 app.get('/problems', async (req, res) => {
     try{
-        const data = await pool.query('SELECT * FROM problems')
+        const data = await pool.query('SELECT * FROM problems ORDER BY id')
         res.status(200).send(data.rows)
     } catch (err){
         console.log(err)
