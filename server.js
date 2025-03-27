@@ -12,9 +12,6 @@ app.use(express.json())
 app.get('/problems', async (req, res) => {
     try{
         const data = await pool.query('SELECT * FROM problems ORDER BY id')
-        if (result.rows.length === 0) {
-          return res.status(404).json({ message: 'No problems found' });
-        }
         res.status(200).send(data.rows)
     } catch (err){
         console.log(err)
@@ -23,17 +20,13 @@ app.get('/problems', async (req, res) => {
 })
 
 /* roadmap endpoint */
-app.get('/problems/:roadmap', async (req, res) => {
+app.get('/problems/roadmap/:roadmap', async (req, res) => {
   try {
     const { roadmap } = req.params;
     const result = await pool.query(
       'SELECT * FROM problems WHERE roadmap = $1 ORDER BY id',
       [roadmap.toLowerCase()]
     );
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'No problems found' });
-    }
     
     res.status(200).json(result.rows);
   } catch (err) {
