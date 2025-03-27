@@ -44,33 +44,36 @@ const authenticateKey = (req, res, next) => {
     }
   };
 
+//PUT endpoint
 app.put('/problems/:id', authenticateKey, async (req, res) => {
-    try {
-        const { rows } = await pool.query(
-            `UPDATE problems SET
-                title = $1,
-                difficulty = $2,
-                category = $3,
-                description = $4,
-                solution = $5,
-                explanation = $6,
-                yt_link = $7
-            WHERE id = $8 RETURNING id`,
-            [
-                req.body.title,
-                req.body.difficulty,
-                req.body.category,
-                req.body.description,
-                req.body.solution,
-                req.body.explanation,
-                req.body.yt_link || null,
-                req.params.id
-            ]
-        );
-        rows.length ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
-    } catch (err) {
-        res.status(500).json({ error: 'Update failed' });
-    }
+  try {
+      const { rows } = await pool.query(
+          `UPDATE problems SET
+              title = $1,
+              difficulty = $2,
+              category = $3,
+              roadmap = $4,
+              description = $5,
+              solution = $6,
+              explanation = $7,
+              yt_link = $8
+          WHERE id = $9 RETURNING id`,
+          [
+              req.body.problem.title,
+              req.body.problem.difficulty,
+              req.body.problem.category,
+              req.body.problem.roadmap,
+              req.body.problem.description,
+              req.body.problem.solution,
+              req.body.problem.explanation,
+              req.body.problem.yt_link || null,
+              req.params.id
+          ]
+      );
+      rows.length ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
+  } catch (err) {
+      res.status(500).json({ error: 'Update failed' });
+  }
 });
 
   app.delete('/problems/:id', authenticateKey, async (req, res) => {
@@ -87,28 +90,29 @@ app.put('/problems/:id', authenticateKey, async (req, res) => {
 
 // admin post
 app.post('/admin/post', authenticateKey, async (req, res) => {
-    try {
-      const { rows } = await pool.query(
-        `INSERT INTO problems (
-          id, title, difficulty, category, 
-          description, solution, explanation, yt_link
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-          req.body.id, // Manual ID from form
-          req.body.title,
-          req.body.difficulty,
-          req.body.category,
-          req.body.description,
-          req.body.solution,
-          req.body.explanation,
-          req.body.yt_link || null
-        ]
-      );
-      res.json({ success: true });
-    } catch (err) {
-      console.error('Database error:', err);
-      res.status(500).json({ error: 'Insert failed' });
-    }
-  });
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO problems (
+        id, title, difficulty, category, roadmap,
+        description, solution, explanation, yt_link
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        req.body.problem.id,
+        req.body.problem.title,
+        req.body.problem.difficulty,
+        req.body.problem.category,
+        req.body.problem.roadmap,
+        req.body.problem.description,
+        req.body.problem.solution,
+        req.body.problem.explanation,
+        req.body.problem.yt_link || null
+      ]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Database error:', err);
+    res.status(500).json({ error: 'Insert failed' });
+  }
+});
 
 app.listen(port, () => console.log(`Server has started on port: ${port}`))
