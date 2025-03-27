@@ -12,12 +12,35 @@ app.use(express.json())
 app.get('/problems', async (req, res) => {
     try{
         const data = await pool.query('SELECT * FROM problems ORDER BY id')
+        if (result.rows.length === 0) {
+          return res.status(404).json({ message: 'No problems found' });
+        }
         res.status(200).send(data.rows)
     } catch (err){
         console.log(err)
         res.sendStatus(500)
     }
 })
+
+/* roadmap endpoint */
+app.get('/problems/:roadmap', async (req, res) => {
+  try {
+    const { roadmap } = req.params;
+    const result = await pool.query(
+      'SELECT * FROM problems WHERE roadmap = $1 ORDER BY id',
+      [roadmap.toLowerCase()]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'No problems found' });
+    }
+    
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Error fetching problems:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.get('/problems/:id', async (req, res) => {
     try{
