@@ -9,27 +9,6 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
-const admin = require('firebase-admin');
-
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
-
-app.post('/login', async (req, res) => {
-  try {
-      const { idToken } = req.body;  // Get token from frontend
-      const decodedToken = await admin.auth().verifyIdToken(idToken); // Verify token
-      const uid = decodedToken.uid; // Get user ID
-
-      res.json({ success: true, uid, message: 'User authenticated' });
-  } catch (error) {
-      console.error('Authentication error:', error);
-      res.status(401).json({ error: 'Unauthorized' });
-  }
-});
-
 app.get('/problems', async (req, res) => {
     try{
         const data = await pool.query('SELECT * FROM problems ORDER BY id')
