@@ -3,3 +3,4 @@ node_modules
 quantapus-ec2.pem
 deployment.sh
 test.rest
+serviceAccountKey.json
