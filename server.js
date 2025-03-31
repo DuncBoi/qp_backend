@@ -17,7 +17,22 @@ app.get('/problems', async (req, res) => {
         console.log(err)
         res.sendStatus(500)
     }
-})
+});
+
+// Get completed problems for a user
+app.get('/completed-problems', async (req, res) => {
+  try {
+      const userId = req.query.userId; // Get from query params
+      const result = await pool.query(
+          'SELECT problem_id FROM completed_problems WHERE user_id = $1',
+          [userId]
+      );
+      res.json(result.rows.map(r => r.problem_id));
+  } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch completions' });
+  }
+});
+
 
 /* roadmap endpoint */
 app.get('/problems/roadmap/:roadmap', async (req, res) => {
