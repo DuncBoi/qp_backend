@@ -74,7 +74,7 @@ app.post('/api/toggle-complete', async (req, res) => {
     const { userId, problemId } = req.body;
 
     const result = await pool.query(`
-      INSERT INTO user_problems (user_id, problem_id)
+      INSERT INTO completed_problems (user_id, problem_id)
       VALUES ($1, $2)
       ON CONFLICT (user_id, problem_id)
       DO UPDATE SET user_id = EXCLUDED.user_id
