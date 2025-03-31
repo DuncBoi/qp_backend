@@ -74,12 +74,21 @@ app.post('/api/toggle-complete', async (req, res) => {
     const { userId, problemId } = req.body;
 
     const result = await pool.query(`
-      INSERT INTO completed_problems (user_id, problem_id)
-      VALUES ($1, $2)
-      ON CONFLICT (user_id, problem_id)
-      DO UPDATE SET user_id = EXCLUDED.user_id
-      WHERE FALSE
-      RETURNING *
+      WITH                            
+      delete_attempt AS (
+        DELETE FROM completed_problems 
+        WHERE user_id = $1 AND problem_id = $2
+        RETURNING 'deleted' AS action
+      ),
+      insert_attempt AS (
+        INSERT INTO completed_problems (user_id, problem_id)
+        SELECT $1, $2
+        WHERE NOT EXISTS (SELECT 1 FROM delete_attempt)
+        RETURNING 'inserted' AS action
+      )
+      SELECT * FROM delete_attempt
+      UNION ALL
+      SELECT * FROM insert_attempt;
     `, [userId, problemId]);
 
     res.json({ completed: result.rowCount > 0 });
