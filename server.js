@@ -11,13 +11,7 @@ app.use(express.json())
 
 app.get('/problems', async (req, res) => {
     try{
-        const data = await pool.query(`SELECT p.*,
-        EXISTS(
-          SELECT 1 FROM completed_problems 
-          WHERE user_id = $1 AND problem_id = p.id
-        ) as completed
-        FROM problems p
-        ORDER BY p.id`)
+        const data = await pool.query('SELECT * FROM problems ORDER BY id')
         res.status(200).send(data.rows)
     } catch (err){
         console.log(err)
