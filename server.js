@@ -17,7 +17,7 @@ const corsOptions = {
 }
 app.use(cors(corsOptions))
 
-app.options('*', cors(corsOptions));
+app.options('*', cors(corsOptions))
 
 const serviceAccount = require('./serviceAccountKey.json');
 admin.initializeApp({
