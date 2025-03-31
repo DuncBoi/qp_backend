@@ -1,64 +1,23 @@
 const express = require('express')
 const pool = require('./db')
 const cors = require('cors')
-const admin = require('firebase-admin');
 require('dotenv').config()
 
 const port = process.env.PORT || 3000
 
 const app = express()
+app.use(cors())
 app.use(express.json())
 
-const corsOptions = {
-  origin: '*', 
-  methods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}
-app.use(cors(corsOptions))
-
-app.options('*', cors(corsOptions))
-
-const serviceAccount = require('./serviceAccountKey.json');
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
-const verifyToken = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized - Missing token' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    req.user = { uid: decodedToken.uid };
-    next();
-  } catch (error) {
-    console.error('Token verification failed:', error);
-    res.status(401).json({ error: 'Unauthorized - Invalid token' });
-  }
-};
-
-app.get('/problems', verifyToken, async (req, res) => {
+app.get('/problems', async (req, res) => {
     try{
-        const userId = req.user.uid;
-        const data = await pool.query(`SELECT p.*,
-        EXISTS(
-          SELECT 1 FROM completed_problems 
-          WHERE user_id = $1 AND problem_id = p.id
-        ) as completed
-        FROM problems p
-        ORDER BY p.id`, [userId]);
+        const data = await pool.query('SELECT * FROM problems ORDER BY id')
         res.status(200).send(data.rows)
     } catch (err){
         console.log(err)
         res.sendStatus(500)
     }
-});
+})
 
 /* roadmap endpoint */
 app.get('/problems/roadmap/:roadmap', async (req, res) => {
@@ -77,14 +36,13 @@ app.get('/problems/roadmap/:roadmap', async (req, res) => {
 });
 
 /* user login endpoint */
-app.options('/log-user', cors());
-app.post('/log-user', verifyToken, async (req, res) => {
+app.post('/log-user', async (req, res) => {
   try {
-    const userId = req.user.uid;
+    const { uid } = req.body;
     
     await pool.query(
       'INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING',
-      [userId]
+      [uid]
     );
 
     res.status(200).json({ success: true });
