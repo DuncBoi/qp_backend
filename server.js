@@ -7,7 +7,6 @@ require('dotenv').config()
 const port = process.env.PORT || 3000
 
 const app = express()
-app.use(cors())
 app.use(express.json())
 
 const serviceAccount = require('./serviceAccountKey.json');
@@ -68,6 +67,7 @@ app.get('/problems/roadmap/:roadmap', async (req, res) => {
 });
 
 /* user login endpoint */
+app.options('/log-user', cors());
 app.post('/log-user', verifyToken, async (req, res) => {
   try {
     const userId = req.user.uid;
