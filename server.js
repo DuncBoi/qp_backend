@@ -11,7 +11,13 @@ app.use(express.json())
 
 app.get('/problems', async (req, res) => {
     try{
-        const data = await pool.query('SELECT * FROM problems ORDER BY id')
+        const data = await pool.query(`SELECT p.*,
+        EXISTS(
+          SELECT 1 FROM completed_problems 
+          WHERE user_id = $1 AND problem_id = p.id
+        ) as completed
+        FROM problems p
+        ORDER BY p.id`)
         res.status(200).send(data.rows)
     } catch (err){
         console.log(err)
@@ -91,6 +97,7 @@ app.post('/api/toggle-complete', async (req, res) => {
       SELECT * FROM insert_attempt;
     `, [userId, problemId]);
 
+    const action = result.rows[0]?.action;
     res.json({ completed: result.rowCount > 0 });
   } catch (error) {
     console.error('Toggle error:', error);
