@@ -35,6 +35,24 @@ app.get('/problems/roadmap/:roadmap', async (req, res) => {
   }
 });
 
+// user login endpoint
+app.post('/log-user', async (req, res) => {
+  try {
+    const { uid } = req.body;
+    
+    await pool.query(
+      'INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING',
+      [uid]
+    );
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Error logging user:', error);
+    res.status(500).json({ error: 'Failed to log user' });
+  }
+});
+
+
 app.get('/problems/:id', async (req, res) => {
     try{
         const { id } = req.params;
