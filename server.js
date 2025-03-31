@@ -76,8 +76,9 @@ app.post('/api/toggle-complete', async (req, res) => {
     const result = await pool.query(`
       INSERT INTO user_problems (user_id, problem_id)
       VALUES ($1, $2)
-      ON CONFLICT (user_id, problem_id) 
-      DO DELETE WHERE user_id = $1 AND problem_id = $2
+      ON CONFLICT (user_id, problem_id)
+      DO UPDATE SET user_id = EXCLUDED.user_id
+      WHERE FALSE
       RETURNING *
     `, [userId, problemId]);
 
