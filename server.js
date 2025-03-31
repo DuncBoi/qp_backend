@@ -35,7 +35,7 @@ app.get('/problems/roadmap/:roadmap', async (req, res) => {
   }
 });
 
-// user login endpoint
+/* user login endpoint */
 app.post('/log-user', async (req, res) => {
   try {
     const { uid } = req.body;
@@ -66,7 +66,27 @@ app.get('/problems/:id', async (req, res) => {
         console.log(err)
         res.sendStatus(500)
     }
-})
+});
+
+/* toggle checkmark endpoint */
+app.post('/api/toggle-complete', async (req, res) => {
+  try {
+    const { userId, problemId } = req.body;
+
+    const result = await pool.query(`
+      INSERT INTO user_problems (user_id, problem_id)
+      VALUES ($1, $2)
+      ON CONFLICT (user_id, problem_id) 
+      DO DELETE WHERE user_id = $1 AND problem_id = $2
+      RETURNING *
+    `, [userId, problemId]);
+
+    res.json({ completed: result.rowCount > 0 });
+  } catch (error) {
+    console.error('Toggle error:', error);
+    res.status(500).json({ error: 'Failed to toggle completion' });
+  }
+});
 
 const authenticateKey = (req, res, next) => {
     const submittedKey = req.body.secretKey;
