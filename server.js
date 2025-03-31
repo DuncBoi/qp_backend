@@ -7,8 +7,17 @@ require('dotenv').config()
 const port = process.env.PORT || 3000
 
 const app = express()
-app.use(cors())
 app.use(express.json())
+
+const corsOptions = {
+  origin: '*', 
+  methods: ['POST', 'GET', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}
+app.use(cors(corsOptions))
+
+app.options('*', cors(corsOptions));
 
 const serviceAccount = require('./serviceAccountKey.json');
 admin.initializeApp({
