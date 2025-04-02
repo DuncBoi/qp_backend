@@ -33,6 +33,37 @@ app.get('/completed-problems', async (req, res) => {
   }
 });
 
+//get roadmap progress for roadmap
+app.get('/api/roadmap-progress', async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    
+    // Single query to get progress for all roadmaps
+    const result = await pool.query(`
+      SELECT 
+        p.roadmap,
+        ROUND(
+          (COUNT(cp.problem_id) * 100.0 / GREATEST(COUNT(p.id), 1)
+        ) AS progress
+      FROM problems p
+      LEFT JOIN completed_problems cp 
+        ON p.id = cp.problem_id AND cp.user_id = $1
+      GROUP BY p.roadmap
+    `, [userId]);
+
+    // Convert to object format { "Brainteasers": 45, ... }
+    const progress = result.rows.reduce((acc, row) => {
+      acc[row.roadmap] = Number(row.progress) || 0;
+      return acc;
+    }, {});
+
+    res.json(progress);
+  } catch (error) {
+    console.error('Error fetching roadmap progress:', error);
+    res.status(500).json({ error: 'Failed to fetch progress data' });
+  }
+});
+
 
 /* roadmap endpoint */
 app.get('/problems/roadmap/:roadmap', async (req, res) => {
