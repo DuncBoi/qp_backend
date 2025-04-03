@@ -138,7 +138,7 @@ app.get('/problems/:id', async (req, res) => {
 });
 
 /* toggle checkmark endpoint */
-app.post('/api/toggle-complete', async (req, res) => {
+app.post('/toggle-complete', async (req, res) => {
   try {
     const { userId, problemId } = req.body;
 
