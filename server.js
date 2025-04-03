@@ -43,14 +43,10 @@ app.get('/roadmap-progress', async (req, res) => {
     
     // Single query to get progress for all roadmaps
     const result = await pool.query(`
-      SELECT 
-        p.roadmap,
-        ROUND(
-          (COUNT(cp.problem_id) * 100.0 / GREATEST(COUNT(p.id), 1)
-        ) AS progress
+      SELECT p.roadmap,
+      ROUND((COUNT(cp.problem_id) * 100.0 / GREATEST(COUNT(p.id), 1))) AS progress
       FROM problems p
-      LEFT JOIN completed_problems cp 
-        ON p.id = cp.problem_id AND cp.user_id = $1
+      LEFT JOIN completed_problems cp ON p.id = cp.problem_id AND cp.user_id = $1
       GROUP BY p.roadmap
       HAVING p.roadmap IS NOT NULL
     `, [userId]);
