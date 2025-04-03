@@ -6,7 +6,10 @@ require('dotenv').config()
 const port = process.env.PORT || 3000
 
 const app = express()
-app.use(cors())
+app.use(cors({
+  origin: '*'
+}
+))
 app.use(express.json())
 
 app.get('/problems', async (req, res) => {
@@ -33,8 +36,8 @@ app.get('/completed-problems', async (req, res) => {
   }
 });
 
-//get roadmap progress for roadmap
-app.get('/api/roadmap-progress', async (req, res) => {
+//get roadmap progress for progress bar
+app.get('/roadmap-progress', async (req, res) => {
   try {
     const userId = req.query.userId;
     
@@ -49,13 +52,15 @@ app.get('/api/roadmap-progress', async (req, res) => {
       LEFT JOIN completed_problems cp 
         ON p.id = cp.problem_id AND cp.user_id = $1
       GROUP BY p.roadmap
+      HAVING p.roadmap IS NOT NULL
     `, [userId]);
 
-    // Convert to object format { "Brainteasers": 45, ... }
     const progress = result.rows.reduce((acc, row) => {
       acc[row.roadmap] = Number(row.progress) || 0;
       return acc;
     }, {});
+    
+    console.log(progress);
 
     res.json(progress);
   } catch (error) {
