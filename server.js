@@ -22,10 +22,10 @@ app.get('/problems', async (req, res) => {
     }
 });
 
-// Get completed problems for a user
+// Get all completed problems for a user
 app.get('/completed-problems', async (req, res) => {
   try {
-      const userId = req.query.userId; // Get from query params
+      const userId = req.query.userId; 
       const result = await pool.query(
           'SELECT problem_id FROM completed_problems WHERE user_id = $1',
           [userId]
@@ -33,6 +33,28 @@ app.get('/completed-problems', async (req, res) => {
       res.json(result.rows.map(r => r.problem_id));
   } catch (error) {
       res.status(500).json({ error: 'Failed to fetch completions' });
+  }
+});
+
+// Get completed problem status for a specific user + problem
+app.get('/completed-problems/check', async (req, res) => {
+  try {
+    const { userId, problemId } = req.query;
+
+    const result = await pool.query(
+      `SELECT EXISTS(
+        SELECT 1 
+        FROM completed_problems 
+        WHERE user_id = $1 AND problem_id = $2
+      )`,
+      [userId, problemId]
+    );
+
+    res.json({ completed: result.rows[0].exists });
+    
+  } catch (error) {
+    console.error('Error checking completion:', error);
+    res.status(500).json({ error: 'Failed to check completion status' });
   }
 });
 
