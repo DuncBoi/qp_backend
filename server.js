@@ -12,6 +12,7 @@ app.use(cors({
 ))
 app.use(express.json())
 
+// Get all problems
 app.get('/problems', async (req, res) => {
     try{
         const data = await pool.query('SELECT * FROM problems ORDER BY id')
@@ -187,16 +188,18 @@ app.put('/problems/:id', authenticateKey, async (req, res) => {
               difficulty = $2,
               category = $3,
               roadmap = $4,
-              description = $5,
-              solution = $6,
-              explanation = $7,
-              yt_link = $8
-          WHERE id = $9 RETURNING id`,
+              roadmap_num = $5,
+              description = $6,
+              solution = $7,
+              explanation = $8,
+              yt_link = $9
+          WHERE id = $10 RETURNING id`,
           [
               req.body.problem.title,
               req.body.problem.difficulty,
               req.body.problem.category,
               req.body.problem.roadmap,
+              req.body.problem.roadmap_num || null,
               req.body.problem.description,
               req.body.problem.solution,
               req.body.problem.explanation,
@@ -227,15 +230,16 @@ app.post('/admin/post', authenticateKey, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `INSERT INTO problems (
-        id, title, difficulty, category, roadmap,
+        id, title, difficulty, category, roadmap, roadmap_num,
         description, solution, explanation, yt_link
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
       [
         req.body.problem.id,
         req.body.problem.title,
         req.body.problem.difficulty,
         req.body.problem.category,
-        req.body.problem.roadmap,
+        req.body.problem.roadmap || null,
+        req.body.problem.roadmap_num || null,
         req.body.problem.description,
         req.body.problem.solution,
         req.body.problem.explanation,
