@@ -94,7 +94,7 @@ app.get('/problems/roadmap/:roadmap', async (req, res) => {
   try {
     const { roadmap } = req.params;
     const result = await pool.query(
-      'SELECT * FROM problems WHERE roadmap = $1 ORDER BY roadmap_num DESC',
+      'SELECT * FROM problems WHERE roadmap = $1 ORDER BY roadmap_num',
       [roadmap.toLowerCase()]
     );
     
