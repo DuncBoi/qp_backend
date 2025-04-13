@@ -5,12 +5,38 @@ require('dotenv').config()
 
 const port = process.env.PORT || 3000
 
+const admin = require('firebase-admin');
+const serviceAccount = require('./serviceAccountKey.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
 const app = express()
 app.use(cors({
   origin: '*'
 }
 ))
 app.use(express.json())
+
+const authenticateFirebaseUser = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or invalid auth token' });
+  }
+
+  const idToken = authHeader.split('Bearer ')[1];
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    req.userId = decodedToken.uid;  // Attach UID to request
+    next();
+  } catch (error) {
+    console.error('Firebase Auth Error:', error);
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+};
 
 // Get all problems
 app.get('/problems', async (req, res) => {
@@ -24,9 +50,9 @@ app.get('/problems', async (req, res) => {
 });
 
 // Get all completed problems for a user
-app.get('/completed-problems', async (req, res) => {
+app.get('/completed-problems', authenticateFirebaseUser, async (req, res) => {
   try {
-      const userId = req.query.userId; 
+      const userId = req.userId; 
       const result = await pool.query(
           'SELECT problem_id FROM completed_problems WHERE user_id = $1',
           [userId]
