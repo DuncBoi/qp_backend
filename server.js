@@ -67,7 +67,7 @@ app.get('/completed-problems', authenticateFirebaseUser, async (req, res) => {
 app.get('/completed-problems/check', authenticateFirebaseUser, async (req, res) => {
   try {
     const userId = req.userId;
-    const { problemId } = req.body;
+    const { problemId } = req.query;
 
     const result = await pool.query(
       `SELECT EXISTS(
