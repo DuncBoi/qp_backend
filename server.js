@@ -30,7 +30,7 @@ const authenticateFirebaseUser = async (req, res, next) => {
 
   try {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-    req.userId = decodedToken.uid;  // Attach UID to request
+    req.userId = decodedToken.uid;
     next();
   } catch (error) {
     console.error('Firebase Auth Error:', error);
@@ -64,9 +64,10 @@ app.get('/completed-problems', authenticateFirebaseUser, async (req, res) => {
 });
 
 // Get completed problem status for a specific user + problem
-app.get('/completed-problems/check', async (req, res) => {
+app.get('/completed-problems/check', authenticateFirebaseUser, async (req, res) => {
   try {
-    const { userId, problemId } = req.query;
+    const userId = req.userId;
+    const { problemId } = req.body;
 
     const result = await pool.query(
       `SELECT EXISTS(
@@ -86,9 +87,9 @@ app.get('/completed-problems/check', async (req, res) => {
 });
 
 //get roadmap progress for progress bar
-app.get('/roadmap-progress', async (req, res) => {
+app.get('/roadmap-progress', authenticateFirebaseUser, async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.userId;
     
     // Single query to get progress for all roadmaps
     const result = await pool.query(`
@@ -132,9 +133,9 @@ app.get('/problems/roadmap/:roadmap', async (req, res) => {
 });
 
 /* user login endpoint */
-app.post('/log-user', async (req, res) => {
+app.post('/log-user', authenticateFirebaseUser, async (req, res) => {
   try {
-    const { uid } = req.body;
+    const uid = req.userId;
     
     await pool.query(
       'INSERT INTO users (id) VALUES ($1) ON CONFLICT (id) DO NOTHING',
@@ -165,9 +166,10 @@ app.get('/problems/:id', async (req, res) => {
 });
 
 /* toggle checkmark endpoint */
-app.post('/toggle-complete', async (req, res) => {
+app.post('/toggle-complete', authenticateFirebaseUser, async (req, res) => {
   try {
-    const { userId, problemId } = req.body;
+    const userId = req.userId;
+    const { problemId } = req.body;
 
     const result = await pool.query(`
       WITH                            
