@@ -149,6 +149,50 @@ app.post('/log-user', authenticateFirebaseUser, async (req, res) => {
   }
 });
 
+app.post('/batch-toggle-complete', authenticateFirebaseUser, async (req, res) => {
+  const userId = req.userId;
+  const changes = req.body.changes;
+
+  if (!changes || typeof changes !== 'object') {
+    return res.status(400).json({ error: 'Invalid or missing changes object' });
+  }
+
+  const insertPromises = [];
+  const deletePromises = [];
+
+  try {
+    for (const [problemId, shouldBeCompleted] of Object.entries(changes)) {
+      const pid = parseInt(problemId, 10);
+      if (Number.isNaN(pid)) continue;
+
+      if (shouldBeCompleted) {
+        insertPromises.push(
+          pool.query(
+            `INSERT INTO completed_problems (user_id, problem_id)
+             VALUES ($1, $2)
+             ON CONFLICT DO NOTHING`,
+            [userId, pid]
+          )
+        );
+      } else {
+        deletePromises.push(
+          pool.query(
+            `DELETE FROM completed_problems
+             WHERE user_id = $1 AND problem_id = $2`,
+            [userId, pid]
+          )
+        );
+      }
+    }
+
+    await Promise.all([...insertPromises, ...deletePromises]);
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('Batch toggle error:', err);
+    res.status(500).json({ error: 'Batch toggle failed' });
+  }
+});
+
 
 app.get('/problems/:id', async (req, res) => {
     try{
