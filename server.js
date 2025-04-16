@@ -9,6 +9,7 @@ const admin = require('firebase-admin');
 const serviceAccount = require('./serviceAccountKey.json');
 const rateLimit = require('express-rate-limit');
 const RedisStore = require('rate-limit-redis');
+const { createClient } = require('redis');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -34,7 +35,7 @@ const userRateLimiter = rateLimit({
   }),
   keyGenerator: (req) => req.userId || req.ip,
   windowMs: 60 * 1000,
-  max: 15,
+  max: 5,
   message: { error: 'You’re doing that too much. Please wait a bit.' },
   standardHeaders: true,
   legacyHeaders: false
