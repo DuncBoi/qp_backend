@@ -63,75 +63,6 @@ app.get('/completed-problems', authenticateFirebaseUser, async (req, res) => {
   }
 });
 
-// Get completed problem status for a specific user + problem
-app.get('/completed-problems/check', authenticateFirebaseUser, async (req, res) => {
-  try {
-    const userId = req.userId;
-    const { problemId } = req.query;
-
-    const result = await pool.query(
-      `SELECT EXISTS(
-        SELECT 1 
-        FROM completed_problems 
-        WHERE user_id = $1 AND problem_id = $2
-      )`,
-      [userId, problemId]
-    );
-
-    res.json({ completed: result.rows[0].exists });
-    
-  } catch (error) {
-    console.error('Error checking completion:', error);
-    res.status(500).json({ error: 'Failed to check completion status' });
-  }
-});
-
-//get roadmap progress for progress bar
-app.get('/roadmap-progress', authenticateFirebaseUser, async (req, res) => {
-  try {
-    const userId = req.userId;
-    
-    // Single query to get progress for all roadmaps
-    const result = await pool.query(`
-      SELECT p.roadmap,
-      ROUND((COUNT(cp.problem_id) * 100.0 / GREATEST(COUNT(p.id), 1))) AS progress
-      FROM problems p
-      LEFT JOIN completed_problems cp ON p.id = cp.problem_id AND cp.user_id = $1
-      GROUP BY p.roadmap
-      HAVING p.roadmap IS NOT NULL
-    `, [userId]);
-
-    const progress = result.rows.reduce((acc, row) => {
-      acc[row.roadmap] = Number(row.progress) || 0;
-      return acc;
-    }, {});
-    
-    console.log(progress);
-
-    res.json(progress);
-  } catch (error) {
-    console.error('Error fetching roadmap progress:', error);
-    res.status(500).json({ error: 'Failed to fetch progress data' });
-  }
-});
-
-
-/* roadmap endpoint */
-app.get('/problems/roadmap/:roadmap', async (req, res) => {
-  try {
-    const { roadmap } = req.params;
-    const result = await pool.query(
-      'SELECT * FROM problems WHERE roadmap = $1 ORDER BY roadmap_num',
-      [roadmap.toLowerCase()]
-    );
-    
-    res.status(200).json(result.rows);
-  } catch (err) {
-    console.error('Error fetching problems:', err);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 /* user login endpoint */
 app.post('/log-user', authenticateFirebaseUser, async (req, res) => {
   try {
@@ -182,54 +113,6 @@ app.post('/batch-toggle-complete', authenticateFirebaseUser, async (req, res) =>
   } catch (err) {
     console.error('Batch toggle error:', err);
     res.status(500).json({ error: 'Batch toggle failed' });
-  }
-});
-
-
-app.get('/problems/:id', async (req, res) => {
-    try{
-        const { id } = req.params;
-        const data = await pool.query('SELECT * FROM problems WHERE id = $1', [id]);
-        if (data.rows.length === 0){
-            return res.status(404).json({error: 'Problem not found'});
-        }
-        const problem = data.rows[0];
-        res.status(200).send(problem)
-    } catch (err){
-        console.log(err)
-        res.sendStatus(500)
-    }
-});
-
-/* toggle checkmark endpoint */
-app.post('/toggle-complete', authenticateFirebaseUser, async (req, res) => {
-  try {
-    const userId = req.userId;
-    const { problemId } = req.body;
-
-    const result = await pool.query(`
-      WITH                            
-      delete_attempt AS (
-        DELETE FROM completed_problems 
-        WHERE user_id = $1 AND problem_id = $2
-        RETURNING 'deleted' AS action
-      ),
-      insert_attempt AS (
-        INSERT INTO completed_problems (user_id, problem_id)
-        SELECT $1, $2
-        WHERE NOT EXISTS (SELECT 1 FROM delete_attempt)
-        RETURNING 'inserted' AS action
-      )
-      SELECT * FROM delete_attempt
-      UNION ALL
-      SELECT * FROM insert_attempt;
-    `, [userId, problemId]);
-
-    const action = result.rows[0]?.action;
-    res.json({ completed: result.rowCount > 0 });
-  } catch (error) {
-    console.error('Toggle error:', error);
-    res.status(500).json({ error: 'Failed to toggle completion' });
   }
 });
 
