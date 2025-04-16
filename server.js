@@ -8,6 +8,7 @@ const port = process.env.PORT || 3000
 const admin = require('firebase-admin');
 const serviceAccount = require('./serviceAccountKey.json');
 const rateLimit = require('express-rate-limit');
+const RedisStore = require('rate-limit-redis');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -19,6 +20,25 @@ app.use(cors({
 }
 ))
 app.use(express.json())
+
+const redisClient = createClient({
+  legacyMode: true,
+  url: process.env.REDIS
+});
+
+redisClient.connect().catch(console.error);
+
+const userRateLimiter = rateLimit({
+  store: new RedisStore({
+    sendCommand: (...args) => redisClient.sendCommand(args)
+  }),
+  keyGenerator: (req) => req.userId || req.ip,
+  windowMs: 60 * 1000,
+  max: 15,
+  message: { error: 'You’re doing that too much. Please wait a bit.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 const authenticateFirebaseUser = async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -39,18 +59,6 @@ const authenticateFirebaseUser = async (req, res, next) => {
   }
 };
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,                 // Limit each IP to 5 requests per windowMs
-  message: {
-    error: 'Too many requests, please try again later.'
-  },
-  standardHeaders: true, 
-  legacyHeaders: false
-});
-
-app.use(limiter);
-
 // Get all problems
 app.get('/problems', async (req, res) => {
     try{
@@ -63,7 +71,7 @@ app.get('/problems', async (req, res) => {
 });
 
 // Get all completed problems for a user
-app.get('/completed-problems', authenticateFirebaseUser, async (req, res) => {
+app.get('/completed-problems', authenticateFirebaseUser, userRateLimiter, async (req, res) => {
   try {
       const userId = req.userId; 
       const result = await pool.query(
@@ -77,7 +85,7 @@ app.get('/completed-problems', authenticateFirebaseUser, async (req, res) => {
 });
 
 /* user login endpoint */
-app.post('/log-user', authenticateFirebaseUser, async (req, res) => {
+app.post('/log-user', authenticateFirebaseUser, userRateLimiter, async (req, res) => {
   try {
     const uid = req.userId;
     
@@ -93,7 +101,7 @@ app.post('/log-user', authenticateFirebaseUser, async (req, res) => {
   }
 });
 
-app.post('/batch-toggle-complete', authenticateFirebaseUser, async (req, res) => {
+app.post('/batch-toggle-complete', authenticateFirebaseUser, userRateLimiter, async (req, res) => {
   try {
     const userId = req.userId;
     const changes = req.body.changes;
