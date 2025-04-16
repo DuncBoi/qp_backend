@@ -7,6 +7,7 @@ const port = process.env.PORT || 3000
 
 const admin = require('firebase-admin');
 const serviceAccount = require('./serviceAccountKey.json');
+const rateLimit = require('express-rate-limit');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -37,6 +38,18 @@ const authenticateFirebaseUser = async (req, res, next) => {
     res.status(401).json({ error: 'Unauthorized' });
   }
 };
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,                 // Limit each IP to 5 requests per windowMs
+  message: {
+    error: 'Too many requests, please try again later.'
+  },
+  standardHeaders: true, 
+  legacyHeaders: false
+});
+
+app.use(limiter);
 
 // Get all problems
 app.get('/problems', async (req, res) => {
