@@ -144,7 +144,7 @@ app.get('/problems/:id', async (req, res) => {
   }
 });
 
-app.post('/api/reset-progress', authenticateFirebaseUser, async (req, res) => {
+app.post('/reset-progress', authenticateFirebaseUser, async (req, res) => {
   const userId = req.userId;     
   try {
     await pool.query(
@@ -158,6 +158,35 @@ app.post('/api/reset-progress', authenticateFirebaseUser, async (req, res) => {
     return res.status(500).json({ error: 'Could not reset progress' });
   }
 });
+
+app.post('/delete-user', authenticateFirebaseUser, async (req, res) => {
+  const userId = req.userId;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1) Delete from Auth
+    await admin.auth().deleteUser(userId);
+
+    // 2) Delete from your SQL tables
+    await client.query(
+      `DELETE FROM completed_problems WHERE user_id = $1`, [userId]
+    );
+    await client.query(
+      `DELETE FROM users WHERE id = $1`, [userId]
+    );
+
+    await client.query('COMMIT');
+    res.json({ success: true });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('delete-user error:', err);
+    res.status(500).json({ error: 'Could not delete user' });
+  } finally {
+    client.release();
+  }
+});
+
 
 const authenticateKey = (req, res, next) => {
     const submittedKey = req.body.secretKey;
