@@ -129,6 +129,65 @@ app.post('/batch-toggle-complete', authenticateFirebaseUser, async (req, res) =>
   }
 });
 
+app.get('/problems/:id', async (req, res) => {
+  try{
+      const { id } = req.params;
+      const data = await pool.query('SELECT * FROM problems WHERE id = $1', [id]);
+      if (data.rows.length === 0){
+          return res.status(404).json({error: 'Problem not found'});
+      }
+      const problem = data.rows[0];
+      res.status(200).send(problem)
+  } catch (err){
+      console.log(err)
+      res.sendStatus(500)
+  }
+});
+
+app.post('/api/reset-progress', authenticate, async (req, res) => {
+  const uid = req.body.uid;      
+  try {
+    await pool.query(
+      `DELETE FROM user_progress
+         WHERE user_id = $1`,
+      [uid]
+    );
+    return res.json({ success: true });
+  } catch (err) {
+    console.error('Reset-progress error:', err);
+    return res.status(500).json({ error: 'Could not reset progress' });
+  }
+});
+
+app.post('/api/delete-user', authenticate, async (req, res) => {
+  const uid = req.body.uid;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // 1) remove all progress
+    await client.query(
+      `DELETE FROM user_progress
+         WHERE user_id = $1`,
+      [uid]
+    );
+    // 2) remove the user record itself
+    await client.query(
+      `DELETE FROM users
+         WHERE id = $1`,
+      [uid]
+    );
+    await client.query('COMMIT');
+    return res.json({ success: true });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Delete-user error:', err);
+    return res.status(500).json({ error: 'Could not delete user' });
+  } finally {
+    client.release();
+  }
+});
+
 const authenticateKey = (req, res, next) => {
     const submittedKey = req.body.secretKey;
     if (submittedKey === process.env.ADMIN_SECRET) {
