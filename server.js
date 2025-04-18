@@ -145,12 +145,12 @@ app.get('/problems/:id', async (req, res) => {
 });
 
 app.post('/api/reset-progress', authenticateFirebaseUser, async (req, res) => {
-  const uid = req.body.uid;     
+  const userId = req.userId;     
   try {
     await pool.query(
       `DELETE FROM completed_problems
          WHERE user_id = $1`,
-      [uid]
+      [userId]
     );
     return res.json({ success: true });
   } catch (err) {
