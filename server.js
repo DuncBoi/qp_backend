@@ -51,6 +51,11 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
+//Load Balancer Health Check
+app.get('/', async (req, res) => {
+  res.sendStatus(200);
+});
+
 // Get all problems
 app.get('/problems', async (req, res) => {
     try{
