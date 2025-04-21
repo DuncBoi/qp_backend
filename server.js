@@ -39,25 +39,33 @@ const authenticateFirebaseUser = async (req, res, next) => {
   }
 };
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,                 // Limit each IP to 5 requests per windowMs
-  message: {
-    error: 'Too many requests, please try again later.'
-  },
+// 60 reqs / 1 minute
+const readLimiter = rateLimit({
+  windowMs: 60*1000,
+  max:      60,
+  keyGenerator: req => req.userId || req.ip,
+  message:  { error: 'Too many reads, slow down.' },
   standardHeaders: true, 
   legacyHeaders: false
-});
+})
 
-app.use(limiter);
+// 20 reqs / 1 minute
+const writeLimiter = rateLimit({
+  windowMs: 60*1000,
+  max:      20,
+  keyGenerator: req => req.userId,
+  message:  { error: 'Too many writes, please wait.' },
+  standardHeaders: true, 
+  legacyHeaders: false
+})
 
 //Load Balancer Health Check
-app.get('/', async (req, res) => {
+app.get('/', readLimiter, async (req, res) => {
   res.sendStatus(200);
 });
 
 // Get all problems
-app.get('/problems', async (req, res) => {
+app.get('/problems', readLimiter, async (req, res) => {
     try{
         const data = await pool.query('SELECT * FROM problems ORDER BY id')
         res.status(200).send(data.rows)
@@ -67,8 +75,23 @@ app.get('/problems', async (req, res) => {
     }
 });
 
+app.get('/problems/:id', readLimiter, async (req, res) => {
+  try{
+      const { id } = req.params;
+      const data = await pool.query('SELECT * FROM problems WHERE id = $1', [id]);
+      if (data.rows.length === 0){
+          return res.status(404).json({error: 'Problem not found'});
+      }
+      const problem = data.rows[0];
+      res.status(200).send(problem)
+  } catch (err){
+      console.log(err)
+      res.sendStatus(500)
+  }
+});
+
 // Get all completed problems for a user
-app.get('/completed-problems', authenticateFirebaseUser, async (req, res) => {
+app.get('/completed-problems', authenticateFirebaseUser, readLimiter, async (req, res) => {
   try {
       const userId = req.userId; 
       const result = await pool.query(
@@ -82,7 +105,7 @@ app.get('/completed-problems', authenticateFirebaseUser, async (req, res) => {
 });
 
 /* user login endpoint */
-app.post('/log-user', authenticateFirebaseUser, async (req, res) => {
+app.post('/log-user', authenticateFirebaseUser, writeLimiter, async (req, res) => {
   try {
     const uid = req.userId;
     
@@ -98,7 +121,7 @@ app.post('/log-user', authenticateFirebaseUser, async (req, res) => {
   }
 });
 
-app.post('/batch-toggle-complete', authenticateFirebaseUser, async (req, res) => {
+app.post('/batch-toggle-complete', authenticateFirebaseUser, writeLimiter, async (req, res) => {
   try {
     const userId = req.userId;
     const changes = req.body.changes;
@@ -134,22 +157,7 @@ app.post('/batch-toggle-complete', authenticateFirebaseUser, async (req, res) =>
   }
 });
 
-app.get('/problems/:id', async (req, res) => {
-  try{
-      const { id } = req.params;
-      const data = await pool.query('SELECT * FROM problems WHERE id = $1', [id]);
-      if (data.rows.length === 0){
-          return res.status(404).json({error: 'Problem not found'});
-      }
-      const problem = data.rows[0];
-      res.status(200).send(problem)
-  } catch (err){
-      console.log(err)
-      res.sendStatus(500)
-  }
-});
-
-app.post('/reset-progress', authenticateFirebaseUser, async (req, res) => {
+app.post('/reset-progress', authenticateFirebaseUser, writeLimiter, async (req, res) => {
   const userId = req.userId;     
   try {
     await pool.query(
@@ -164,7 +172,7 @@ app.post('/reset-progress', authenticateFirebaseUser, async (req, res) => {
   }
 });
 
-app.post('/delete-user', authenticateFirebaseUser, async (req, res) => {
+app.post('/delete-user', authenticateFirebaseUser, writeLimiter, async (req, res) => {
   const userId = req.userId;
   const client = await pool.connect();
   try {
