@@ -21,7 +21,7 @@ This is the backend service for [quantapus.com](https://quantapus.com), deployed
 ## Domain & SSL
 - The API is served at [api.quantapus.com](https://api.quantapus.com), which is mapped via a CNAME record to the ALB’s DNS name.
 - TLS is terminated at the ALB using an ACM-managed certificate.
-- To maintain high availability, the ALB performs health checks against the `/` endpoint and automatically reroutes traffic away from any unhealthy targets.
+- The ALB performs health checks against the `/` endpoint and automatically reroutes traffic away from any unhealthy targets.
 
 ---
 
