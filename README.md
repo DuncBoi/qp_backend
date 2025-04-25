@@ -1,6 +1,6 @@
 # Quantapus API
 
-This is the backend service for [quantapus.com](https://quantapus.com), deployed on an AWS EC2 instance with endpoints exposed via [api.quantapus.com](https://api.quantapus.com) through AWS's Application Load Balancer. It provides a REST API for user authentication, data retrieval, updates, and progress tracking. It is backed by a **PostgreSQL** database hosted on **AWS RDS**.
+This is the backend service for [quantapus.com](https://quantapus.com), deployed on an AWS EC2 instance with endpoints exposed via [api.quantapus.com](https://api.quantapus.com) through AWS's Application Load Balancer. It provides a REST API for user authentication, data retrieval, updates, and progress tracking.
 
 ---
 
@@ -11,7 +11,7 @@ This is the backend service for [quantapus.com](https://quantapus.com), deployed
 
 
 - **Database**  
-  We persist all data in a **PostgreSQL** database hosted on **AWS RDS** and deployed in private subnets.
+  ALl data is persisted in a **PostgreSQL** database hosted on **AWS RDS** and deployed in private subnets.
 
 - **Auth**  
   Protected endpoints require a valid Firebase ID token in the `Authorization` header, which the backend verifies using the **Firebase Admin SDK** before granting access.
