@@ -1,6 +1,6 @@
 # Quantapus API
 
-This is the backend service for [quantapus.com](https://quantapus.com), deployed on an AWS EC2 instance with endpoints exposed via [api.quantapus.com](https://api.quantapus.com) through AWS's Application Load Balancer. It provides a REST API for user authentication, problem data retrieval and updates, and progress tracking. It is backed by a **PostgreSQL** database hosted on **AWS RDS**.
+This is the backend service for [quantapus.com](https://quantapus.com), deployed on an AWS EC2 instance with endpoints exposed via [api.quantapus.com](https://api.quantapus.com) through AWS's Application Load Balancer. It provides a REST API for user authentication, data retrieval, updates, and progress tracking. It is backed by a **PostgreSQL** database hosted on **AWS RDS**.
 
 ---
 
