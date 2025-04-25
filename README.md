@@ -11,7 +11,7 @@ This is the backend service for [quantapus.com](https://quantapus.com), deployed
 
 
 - **Database**  
-  ALl data is persisted in a **PostgreSQL** database hosted on **AWS RDS** and deployed in private subnets.
+  All data is persisted in a **PostgreSQL** database hosted on **AWS RDS** and deployed in private subnets.
 
 - **Auth**  
   Protected endpoints require a valid Firebase ID token in the `Authorization` header, which the backend verifies using the **Firebase Admin SDK** before granting access.
