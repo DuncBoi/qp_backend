@@ -221,17 +221,19 @@ app.put('/problems/:id', authenticateKey, async (req, res) => {
               category = $3,
               roadmap = $4,
               roadmap_num = $5,
-              description = $6,
-              solution = $7,
-              explanation = $8,
-              yt_link = $9
-          WHERE id = $10 RETURNING id`,
+              subcategory = $6,
+              description = $7,
+              solution = $8,
+              explanation = $9,
+              yt_link = $10
+          WHERE id = $11 RETURNING id`,
           [
               req.body.problem.title,
               req.body.problem.difficulty,
               req.body.problem.category,
-              req.body.problem.roadmap,
+              req.body.problem.roadmap || null,
               req.body.problem.roadmap_num || null,
+              req.body.problem.subcategory || null,
               req.body.problem.description,
               req.body.problem.solution,
               req.body.problem.explanation,
@@ -262,9 +264,9 @@ app.post('/admin/post', authenticateKey, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `INSERT INTO problems (
-        id, title, difficulty, category, roadmap, roadmap_num,
+        id, title, difficulty, category, roadmap, roadmap_num, subcategory,
         description, solution, explanation, yt_link
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
         req.body.problem.id,
         req.body.problem.title,
@@ -272,6 +274,7 @@ app.post('/admin/post', authenticateKey, async (req, res) => {
         req.body.problem.category,
         req.body.problem.roadmap || null,
         req.body.problem.roadmap_num || null,
+        req.body.problem.subcategory || null,
         req.body.problem.description,
         req.body.problem.solution,
         req.body.problem.explanation,
