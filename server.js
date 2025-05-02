@@ -222,11 +222,13 @@ app.put('/problems/:id', authenticateKey, async (req, res) => {
               roadmap = $4,
               roadmap_num = $5,
               subcategory = $6,
-              description = $7,
-              solution = $8,
-              explanation = $9,
-              yt_link = $10
-          WHERE id = $11 RETURNING id`,
+              subcategory_order = $7,
+              subcategory_rank = $8,
+              description = $9,
+              solution = $10,
+              explanation = $11,
+              yt_link = $12
+          WHERE id = $13 RETURNING id`,
           [
               req.body.problem.title,
               req.body.problem.difficulty,
@@ -234,6 +236,8 @@ app.put('/problems/:id', authenticateKey, async (req, res) => {
               req.body.problem.roadmap || null,
               req.body.problem.roadmap_num || null,
               req.body.problem.subcategory || null,
+              req.body.problem.subcategory_order || null,
+              req.body.problem.subcategory_category || null,
               req.body.problem.description,
               req.body.problem.solution,
               req.body.problem.explanation,
@@ -264,9 +268,9 @@ app.post('/admin/post', authenticateKey, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `INSERT INTO problems (
-        id, title, difficulty, category, roadmap, roadmap_num, subcategory,
+        id, title, difficulty, category, roadmap, roadmap_num, subcategory, subcategory_order, subcategory_rank,
         description, solution, explanation, yt_link
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
         req.body.problem.id,
         req.body.problem.title,
@@ -275,6 +279,8 @@ app.post('/admin/post', authenticateKey, async (req, res) => {
         req.body.problem.roadmap || null,
         req.body.problem.roadmap_num || null,
         req.body.problem.subcategory || null,
+        req.body.problem.subcategory_order || null,
+        req.body.problem.subcategory_rank || null,
         req.body.problem.description,
         req.body.problem.solution,
         req.body.problem.explanation,
