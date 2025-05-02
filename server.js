@@ -237,7 +237,7 @@ app.put('/problems/:id', authenticateKey, async (req, res) => {
               req.body.problem.roadmap_num || null,
               req.body.problem.subcategory || null,
               req.body.problem.subcategory_order || null,
-              req.body.problem.subcategory_category || null,
+              req.body.problem.subcategory_rank || null,
               req.body.problem.description,
               req.body.problem.solution,
               req.body.problem.explanation,
