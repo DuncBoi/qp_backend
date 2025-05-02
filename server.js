@@ -277,7 +277,6 @@ app.post('/admin/post', authenticateKey, async (req, res) => {
         req.body.problem.roadmap || null,
         req.body.problem.subcategory || null,
         req.body.problem.subcategory_order || null,
-        req.body.problem.subcategory_rank || null,
         req.body.problem.description,
         req.body.problem.solution,
         req.body.problem.explanation,
@@ -290,5 +289,32 @@ app.post('/admin/post', authenticateKey, async (req, res) => {
     res.status(500).json({ error: 'Insert failed' });
   }
 });
+
+// Mass Reorder Problems
+app.put('/admin/problems/reorder',authenticateKey, async (req, res) => {
+    const { updates } = req.body;
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const { id, subcategory_order, subcategory_rank } of updates) {
+        await client.query(
+          `UPDATE problems
+             SET subcategory_order = $1,
+                 subcategory_rank = $2
+           WHERE id = $3`,
+          [subcategory_order, subcategory_rank, id]
+        );
+      }
+      await client.query('COMMIT');
+      res.json({ success: true });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error(err);
+      res.status(500).json({ error: 'Failed to save ordering' });
+    } finally {
+      client.release();
+    }
+  }
+);
 
 app.listen(port, () => console.log(`Server has started on port: ${port}`))
