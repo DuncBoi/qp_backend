@@ -220,21 +220,19 @@ app.put('/problems/:id', authenticateKey, async (req, res) => {
               difficulty = $2,
               category = $3,
               roadmap = $4,
-              roadmap_num = $5,
-              subcategory = $6,
-              subcategory_order = $7,
-              subcategory_rank = $8,
-              description = $9,
-              solution = $10,
-              explanation = $11,
-              yt_link = $12
-          WHERE id = $13 RETURNING id`,
+              subcategory = $5,
+              subcategory_order = $6,
+              subcategory_rank = $7,
+              description = $8,
+              solution = $9,
+              explanation = $10,
+              yt_link = $11
+          WHERE id = $12 RETURNING id`,
           [
               req.body.problem.title,
               req.body.problem.difficulty,
               req.body.problem.category,
               req.body.problem.roadmap || null,
-              req.body.problem.roadmap_num || null,
               req.body.problem.subcategory || null,
               req.body.problem.subcategory_order || null,
               req.body.problem.subcategory_rank || null,
@@ -268,16 +266,15 @@ app.post('/admin/post', authenticateKey, async (req, res) => {
   try {
     const { rows } = await pool.query(
       `INSERT INTO problems (
-        id, title, difficulty, category, roadmap, roadmap_num, subcategory, subcategory_order, subcategory_rank,
+        id, title, difficulty, category, roadmap, subcategory, subcategory_order, subcategory_rank,
         description, solution, explanation, yt_link
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [
         req.body.problem.id,
         req.body.problem.title,
         req.body.problem.difficulty,
         req.body.problem.category,
         req.body.problem.roadmap || null,
-        req.body.problem.roadmap_num || null,
         req.body.problem.subcategory || null,
         req.body.problem.subcategory_order || null,
         req.body.problem.subcategory_rank || null,
