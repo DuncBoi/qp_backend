@@ -277,6 +277,7 @@ app.post('/admin/post', authenticateKey, async (req, res) => {
         req.body.problem.roadmap || null,
         req.body.problem.subcategory || null,
         req.body.problem.subcategory_order || null,
+        req.body.problem.subcategory_rank || null,
         req.body.problem.description,
         req.body.problem.solution,
         req.body.problem.explanation,
